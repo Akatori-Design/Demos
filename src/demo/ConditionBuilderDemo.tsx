@@ -1,7 +1,6 @@
 // src/demos/ConditionBuilderDemo.tsx
 
 import { useState } from "react";
-import { Button } from "../components/ui/Button";
 import {
   ConditionBuilder,
   type ConditionBuilderValue,
@@ -58,21 +57,12 @@ export default function ConditionBuilderDemo() {
     groups: [{ id: 1, rules: [{ id: 1, object: "", operator: "", value: "" }] }],
   });
 
-  const canSubmit = val.groups.every((g) =>
-    g.rules.every((r) => r.object && r.operator && r.value)
-  );
 
   return (
     <div style={{ padding: 24, maxWidth: 980, display: "grid", gap: 14 }}>
       <ConditionBuilder config={config} value={val} onChange={setVal} />
 
-      <Button
-        variant="primary"
-        disabled={!canSubmit}
-        onClick={() => alert(JSON.stringify(val, null, 2))}
-      >
-        Submit
-      </Button>
+
     </div>
   );
 }

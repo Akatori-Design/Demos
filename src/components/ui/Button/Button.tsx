@@ -24,8 +24,8 @@ const baseStyle: CSSProperties = {
 
 // This is the style preset for each variant.
 const variantStyle: Record<ButtonVariant, CSSProperties> = {
-  primary: { background: "#111827", color: "white", border: "1px solid #111827" },
-  secondary: { background: "#f3f4f6", color: "#111827", border: "1px solid #d1d5db" },
+  primary: { background: "#111827", color: "white", border: "1px solid #111827", fontWeight: "600" },
+  secondary: { background: "#f3f4f6", color: "#111827", border: "2px solid #000000ff", fontWeight: "600" },
   ghost: { background: "transparent", color: "#111827", border: "1px solid transparent" },
 };
 
