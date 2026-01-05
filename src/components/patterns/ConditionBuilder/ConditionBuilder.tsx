@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { Button } from "../../ui/Button";
 import { Select, type SelectOption } from "../../ui/Select";
+import { AnimatePresence, motion } from "framer-motion";
 
 export type Rule = {
   id: number;
@@ -88,6 +89,28 @@ const orLabelStyle: CSSProperties = {
   paddingLeft: 4,
 };
 
+const fadeSlide = {
+  // Height collapse makes parent containers resize smoothly on remove.
+  // Use a tween (not a spring) to avoid the tiny “settling” nudge at the end.
+  initial: { opacity: 0, y: -6, height: 0 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    height: "auto",
+    transition: { type: "tween", duration: 0.22 },
+  },
+  exit: {
+    opacity: 0,
+    y: -6,
+    height: 0,
+    transition: { type: "tween", duration: 0.22 },
+  },
+} as const;
+
+const layoutTween = {
+  layout: { type: "tween", duration: 0.22 },
+} as const;
+
 function nextId(items: { id: number }[]) {
   return Math.max(0, ...items.map((x) => x.id)) + 1;
 }
@@ -167,9 +190,16 @@ export function ConditionBuilder({ config, value, onChange }: ConditionBuilderPr
   }, [model]);
 
   return (
-    <div style={containerStyle}>
-      {model.groups.map((group, groupIndex) => (
-        <div key={group.id} style={{ display: "grid", gap: 10 }}>
+    <motion.div layout transition={layoutTween} style={containerStyle}>
+      <AnimatePresence initial={false}>
+        {model.groups.map((group, groupIndex) => (
+          <motion.div
+            key={group.id}
+            layout
+            transition={layoutTween}
+            {...fadeSlide}
+            style={{ display: "grid", gap: 10, overflow: "hidden" }}
+          >
           {groupIndex > 0 ? <div style={orLabelStyle}>OR</div> : null}
 
           <div style={groupStyle}>
@@ -187,63 +217,71 @@ export function ConditionBuilder({ config, value, onChange }: ConditionBuilderPr
             </div>
 
             <div style={{ display: "grid", gap: 10 }}>
-              {group.rules.map((rule, ruleIndex) => {
-                const operatorOptions =
-                  config.operatorsByObject[rule.object] ?? [{ label: "Select operator", value: "" }];
+              <AnimatePresence initial={false}>
+                {group.rules.map((rule, ruleIndex) => {
+                  const operatorOptions =
+                    config.operatorsByObject[rule.object] ?? [{ label: "Select operator", value: "" }];
 
-                const valueOptions =
-                  config.valuesByObject[rule.object] ?? [{ label: "Select value", value: "" }];
+                  const valueOptions =
+                    config.valuesByObject[rule.object] ?? [{ label: "Select value", value: "" }];
 
-                return (
-                  <div key={rule.id} style={{ display: "grid", gap: 8 }}>
-                    {ruleIndex > 0 ? <div style={joinerLabelStyle}>AND</div> : null}
+                  return (
+                    <motion.div
+                      key={rule.id}
+                      layout
+                      transition={layoutTween}
+                      {...fadeSlide}
+                      style={{ display: "grid", gap: 8, overflow: "hidden" }}
+                    >
+                      {ruleIndex > 0 ? <div style={joinerLabelStyle}>AND</div> : null}
 
-                    <div style={ruleCardStyle}>
-                      <div style={ruleRowStyle}>
-                        <Select
-                          label={ruleIndex === 0 ? "Object" : undefined}
-                          value={rule.object}
-                          options={config.objects}
-                          onChange={(value) =>
-                            updateRule(group.id, rule.id, {
-                              object: value,
-                              operator: "",
-                              value: "",
-                            })
-                          }
-                        />
+                      <div style={ruleCardStyle}>
+                        <div style={ruleRowStyle}>
+                          <Select
+                            label={ruleIndex === 0 ? "Object" : undefined}
+                            value={rule.object}
+                            options={config.objects}
+                            onChange={(value) =>
+                              updateRule(group.id, rule.id, {
+                                object: value,
+                                operator: "",
+                                value: "",
+                              })
+                            }
+                          />
 
-                        <Select
-                          label={ruleIndex === 0 ? "Operator" : undefined}
-                          value={rule.operator}
-                          options={operatorOptions}
-                          disabled={!rule.object}
-                          onChange={(value) => updateRule(group.id, rule.id, { operator: value })}
-                        />
+                          <Select
+                            label={ruleIndex === 0 ? "Operator" : undefined}
+                            value={rule.operator}
+                            options={operatorOptions}
+                            disabled={!rule.object}
+                            onChange={(value) => updateRule(group.id, rule.id, { operator: value })}
+                          />
 
-                        <Select
-                          label={ruleIndex === 0 ? "Value" : undefined}
-                          value={rule.value}
-                          options={valueOptions}
-                          disabled={!rule.object || !rule.operator}
-                          onChange={(value) => updateRule(group.id, rule.id, { value: value })}
-                        />
+                          <Select
+                            label={ruleIndex === 0 ? "Value" : undefined}
+                            value={rule.value}
+                            options={valueOptions}
+                            disabled={!rule.object || !rule.operator}
+                            onChange={(value) => updateRule(group.id, rule.id, { value: value })}
+                          />
 
-                        <div style={{ display: "flex", alignItems: "flex-start" }}>
-                          <Button
-                            variant="ghost"
-                            onClick={() => removeRule(group.id, rule.id)}
-                            disabled={group.rules.length === 1}
-                            title="Remove rule"
-                          >
-                            ✕
-                          </Button>
+                          <div style={{ display: "flex", alignItems: "flex-start" }}>
+                            <Button
+                              variant="ghost"
+                              onClick={() => removeRule(group.id, rule.id)}
+                              disabled={group.rules.length === 1}
+                              title="Remove rule"
+                            >
+                              ✕
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-start" }}>
@@ -252,10 +290,15 @@ export function ConditionBuilder({ config, value, onChange }: ConditionBuilderPr
               </Button>
             </div>
           </div>
-        </div>
-      ))}
+        </motion.div>
+        ))}
+      </AnimatePresence>
 
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <motion.div
+        layout
+        transition={layoutTween}
+        style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}
+      >
         <Button variant="secondary" onClick={addGroup}>
           Add Group
         </Button>
@@ -263,8 +306,8 @@ export function ConditionBuilder({ config, value, onChange }: ConditionBuilderPr
         <div style={{ fontSize: 12, opacity: 0.75 }}>
           Preview: <span style={{ fontWeight: 800 }}>{preview}</span>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
